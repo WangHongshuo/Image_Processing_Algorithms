@@ -13,13 +13,13 @@
 using namespace std;
 using namespace cv;
 
-float gaussFunc(int x, int y, float theta)
+float gaussFunc(int x, int y, float sigma)
 {
 	// 二维高斯函数
-	theta *= theta;
+	sigma *= sigma;
 	float pi = 3.1415926;
-	float p1 = -(x * x + y * y) / 2.0 / theta;
-	float p2 = 1 / (2 * pi * theta);
+	float p1 = -(x * x + y * y) / 2.0 / sigma;
+	float p2 = 1 / (2 * pi * sigma);
 	return p2 * exp(p1);
 }
 
@@ -55,7 +55,7 @@ void convFunc(const Mat& src, const Mat& k, Mat& dst, T &dateTpye)
 	}
 }
 
-Mat gaussFilter(const Mat& src, size_t filterSize, float theta)
+Mat gaussFilter(const Mat& src, size_t filterSize, float sigma)
 {
 	Mat dst(src.size(), src.type());
 	if (filterSize % 2 == 0)
@@ -65,7 +65,7 @@ Mat gaussFilter(const Mat& src, size_t filterSize, float theta)
 	size_t r = filterSize / 2;
 	for (size_t i = r; i < filterSize; i++)
 		for (size_t j = r; j < filterSize; j++)
-			k.at<float>(i, j) = gaussFunc(i - r, j - r, theta);
+			k.at<float>(i, j) = gaussFunc(i - r, j - r, sigma);
 
 	for (size_t i = 0; i < r + 1; i++)
 		for (size_t j = 0; j < r + 1; j++)
@@ -213,7 +213,19 @@ int main()
 {
 	Mat input = imread("F://lena.jpg");
 	cvtColor(input, input, CV_RGB2GRAY);
+	/*      @fn                             高斯滤波
+	 *      @param  src                     输入图像
+	 *      @param  filterSize              滤波器大小
+	 *      @param  sigma                   高斯函数sigma
+	 *      @return                         滤波后的图像
+	 */
 	Mat gaussRes = gaussFilter(input, 15, 1.5);
+	/*      @fn                             canny
+	 *      @param  src                     输入图像
+	 *      @param  th1                     双阈值边缘连接下限
+	 *      @param  th2                     双阈值边缘连接上限
+	 *      @return                         边缘图像
+	 */
 	Mat cannyRes = cannyFunc(gaussRes, 30, 60);
 	imshow("src", input);
 	imshow("gauss image", gaussRes);

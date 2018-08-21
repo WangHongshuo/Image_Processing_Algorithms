@@ -169,7 +169,6 @@ Mat bicubic(const Mat& src, int rows, int cols)
 			u = sJ - std::floor(sJ);
 			sJ = std::floor(sJ);
 			res = 0;
-			// 
 			for (int tI = -1; tI <= 2; ++tI)
 			{
 				for (int tJ = -1; tJ <= 2; ++tJ)
@@ -188,6 +187,12 @@ int main()
 	Mat input = imread("F://lena.jpg");
 	cvtColor(input, input, CV_RGB2GRAY);
 	double a = 1.5;
+	/*      @fn                             image resize
+	 *      @param  src                     输入图像
+	 *      @param  rows                    缩放后的行数(image height)
+	 *      @param  cols                    缩放后的列数(image width)
+	 *      @return                         缩放后的图像
+	 */
 	Mat resNearest = nearest(input, input.rows*a, input.cols*a);
 	Mat resLinear = linear(input, input.rows*a, input.cols*a);
 	Mat resBicubic = bicubic(input, input.rows*a, input.cols*a);
