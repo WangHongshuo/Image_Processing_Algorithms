@@ -12,7 +12,29 @@ def iRotateKernel(x,y,cosine,sine):
     y1 = -x * sine + y * cosine
     return (x1, y1)
 
-def rotateFunc(image,center,angle,isExpand):
+# 线性插值
+def linear(x,y,src):
+    srcX = math.floor(x)
+    srcY = math.floor(y)
+    if(srcX >= 0 and srcX < src.shape[1] and srcY >= 0 and srcY < src.shape[0]):
+        u = x - srcX
+        v = y - srcY
+        srcX1 = min(srcX + 1,src.shape[1] - 1)
+        srcY1 = min(srcY + 1,src.shape[0] - 1)
+        res = 0
+        # f(sX+u,sY+v) = (1-u)(1-v)f(sX,sY) + (1-u)vf(sX,sY+1) + u(1-v)f(sX+1,sY) + uvf(sX+1,sY+1)
+        res = res + (1 - u)*(1-v)*src[srcY][srcX]
+        res = res + (1 - u)*v*src[srcY1][srcX]
+        res = res + u*(1 - v)*src[srcY][srcX1]
+        res = res + u*v*src[srcY1][srcX1]
+        for i in range(0,len(res)):
+            res[i] = min(res[i],255)
+        return res;
+    else:
+        return (-1,)
+
+
+def rotateFunc(image,center,angle,isExpand,method):
     ## opencv坐标系为(row, col)，对应图像坐标系(y, x)
     ## 旋转公式坐标系为(x, y)
     theta = -angle / 180 * math.pi
@@ -59,20 +81,31 @@ def rotateFunc(image,center,angle,isExpand):
     for x in range(0,dstCol - 1):
         for y in range(0,dstRow - 1):
             (srcX ,srcY) = rotateKernel(x,y,cosine,sine)
-            srcX = round(srcX + f1)
-            srcY = round(srcY + f2)
-            if(srcX >= 0 and srcX < srcCol and srcY >= 0 and srcY < srcRow):
-                dst[y][x] = image[srcY][srcX]
+            srcX = srcX + f1
+            srcY = srcY + f2
+            # 0 - nearest, 1 - linear
+            if(method == 1):
+                pixelVal = linear(srcX,srcY,image)
+                srcX = math.floor(srcX)
+                srcY = math.floor(srcY)
+                if(not(len(pixelVal) == 1 and pixelVal[0] <= 0)):
+                 dst[y][x] = pixelVal
+            else:
+                srcX = round(srcX)
+                srcY = round(srcY)
+                if(srcX >= 0 and srcX < srcCol and srcY >= 0 and srcY < srcRow):
+                    dst[y][x] = image[srcY][srcX]
     return dst
 
-input = cv.imread("F://1.jpg")
+input = cv.imread("F://lena.jpg")
 #   @fn                     图像旋转
 #   @param  image           输入图像
 #   @param  center          旋转中心(row, col)
 #   @param  angle           旋转角度，顺时针为正
-#   @param  isExpand        扩充图像以使图像旋转后能完全显示
+#   @param  isExpand        0 - 保持和原图像一样大小，1 - 扩充图像
+#   @param  method          0 - nearest， 1 - linear
 #   @return                 旋转后的图像
-res = rotateFunc(input,(input.shape[0] // 2, input.shape[1] // 2), 78, 1)
+res = rotateFunc(input,(input.shape[0] // 2, input.shape[1] // 2),45,1,1)
 cv.imshow("input",input)
 cv.imshow("rotated",res)
 cv.waitKey(0)
