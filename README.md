@@ -12,5 +12,9 @@
 
 ## Image_Rotate(Python):
 - 图像旋转：[原理参考链接](https://blog.csdn.net/linshanxian/article/details/68944748)
-## ##程序没有进行单元测试，仅把公式简单的实现##
-## ##临界条件可能报错，仅供参考##
+
+## Image_Histogram_Equalization(Python):
+- 直方图均衡化：[原理参考链接](https://www.cnblogs.com/tianyalu/p/5687782.html)
+
+### ##程序没有进行单元测试，仅把公式简单的实现##
+### ##临界条件可能报错，仅供参考##
