@@ -16,5 +16,9 @@
 ## Image_Histogram_Equalization(Python):
 - 直方图均衡化：[原理参考链接](https://www.cnblogs.com/tianyalu/p/5687782.html)
 
+## Image_MER(Python):
+- #仅完成了凸包#
+- 最小外接矩形（Graham扫描法）：[原理参考链接](https://www.cnblogs.com/Booble/archive/2011/03/10/1980089.html)
+
 ### ##程序没有进行单元测试，仅把公式简单的实现##
 ### ##临界条件可能报错，仅供参考##
