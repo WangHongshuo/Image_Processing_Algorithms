@@ -5,28 +5,43 @@ import math
 from collections import OrderedDict
 
 #   @class                              二维点
-#   @member x                           x坐标
-#   @member y                           y坐标
+#   @member _x                          x坐标
+#   @member _y                          y坐标
 class Point2:
 
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
+    def __init__(self,_x,_y):
+        self.x = _x
+        self.y = _y
 
     def __sub__(self,p):
-        res = Point2(-1,-1)
+        res = Point2(0,0)
         res.x = self.x - p.x
         res.y = self.y - p.y
         return res
+
     #   @fn                             print输出点坐标
     #   return                          str
     def __str__(self):
         return "[" + str(self.x) + ", " + str(self.y) + "] "
+
     #   @fn                             计算两个向量叉积
     #   @param  p                       第二个向量
     #   @return                         叉积
     def crossProduct(self,p):
         return self.x * p.y - self.y * p.x
+
+    #   @fn                             计算两个向量点积
+    #   @param  p                       第二个向量
+    #   @return                         点积
+    def dotProduct(self,p):
+        return self.x * p.x + self.y * p.y
+
+class Rect2:
+    def __init__(self,_p,_w,_h,_area):
+        self.p = _p
+        self.w = _w
+        self.h = _h
+        self.area = _area
 
 #   @class                              边缘信息
 #   @member topLeft                     边缘区域左上坐标
@@ -55,6 +70,7 @@ def getBinaryImageBorder(src,mark):
                src[i][j+1] == mark and src[i+1][j-1] == mark and
                src[i+1][j] == mark and src[i+1][j+1] == mark):
                 borderImg[i][j] = 0
+
     return borderImg
 
 #   @fn                                 获取边缘图像的边缘信息
@@ -83,16 +99,17 @@ def getBorderInfo(src,mark):
             b.topLeft.y = b.borderPoints[i][0].y
         if(b.borderPoints[i][-1].y > b.bottomRight.y):
             b.bottomRight.y = b.borderPoints[i][-1].y
+
     return b
 
 #   @fn                                 获取凸包点集
 #   @param  bInfo                       目标边缘信息
 #   @return                             凸包点集
-def getConvexHull(bInfo):
+def getConvexHull(borderInfo):
     # dict浅拷贝
-    bP = bInfo.borderPoints
-    top = bInfo.topLeft.x
-    bottom = bInfo.bottomRight.x
+    bP = borderInfo.borderPoints
+    top = borderInfo.topLeft.x
+    bottom = borderInfo.bottomRight.x
     # 从下方开始进行Graham扫描，水平序
     # opencv坐标系对Graham扫描无影响，不比转换坐标系
     pStack = list()
@@ -146,8 +163,140 @@ def getConvexHull(bInfo):
             i += 1
         j += 1
     res.append(pStack[-1])
+
     return res
 
+#   @fn                                 获取点在直线y=kx+b上投影坐标
+#   @param  k                           y=kx+b中的k
+#   @param  b                           y=kx+b中的b
+#   @param  x                           点坐标x
+#   @param  y                           点坐标y
+#   @return                             Point2(x,y)，点在直线y=kx+b上投影坐标
+def getPointProjectionInLine(k,b,x,y):
+    x = (k * (y - b) + x) / (k * k + 1)
+    y = k * x + b
+    return Point2(x,y)
+
+#   @fn                                 由旋转卡壳法获得的最小外接矩形的5个求矩形4个顶点坐标
+#   @param  bottom1                     最小外接矩形底部边上的点1
+#   @param  bottom2                     最小外接矩形底部边上的点2
+#   @param  top                         最小外接矩形顶部边上的点
+#   @param  left                        最小外接矩形左侧边上的点
+#   @param  right                       最小外接矩形右侧边上的点
+#   @return                             矩形4个顶点坐标
+def getRectInfo(bottom1,bottom2,top,left,right):
+    p = list([Point2(0,0),Point2(0,0),Point2(0,0),Point2(0,0)])
+    if(bottom1.x == bottom2.x):
+        p[0] = Point2(bottom1.x,right.y)
+        p[1] = Point2(bottom1.x,left.y)
+        p[2] = Point2(top.x,left.y)
+        p[3] = Point2(top.x,right.y)
+    elif(bottom1.y == bottom2.y):
+        p[0] = Point2(right.x,bottom1.y)
+        p[1] = Point2(left.x,bottom1.y)
+        p[2] = Point2(left.x,top.y)
+        p[3] = Point2(right.x,top.y)
+    else:
+        k1 = (bottom1.y - bottom2.y) / (bottom1.x - bottom2.x)
+        b1 = bottom2.y - k1 * bottom2.x
+        p[0] = getPointProjectionInLine(k1,b1,right.x,right.y)
+        p[1] = getPointProjectionInLine(k1,b1,left.x,left.y)
+        k2 = k1
+        b2 = top.y - k2 * top.x
+        p[2] = getPointProjectionInLine(k2,b2,left.x,left.y)
+        p[3] = getPointProjectionInLine(k2,b2,right.x,right.y)
+
+    return p
+
+#   @fn                                 由旋转卡壳法求最小外接矩形
+#   @param  convexHullPoints            凸包点急
+#   @return                             最小外接矩形的信息（4个顶点，高，宽，面积）
+def getMinRectByRotatingCalipers(convexHullPoints):
+    # convexHullPoints[0]和convexHullPoints[-1]相等
+    # 避免在搜索顶点时影响结果，去掉最后一个，搜索用cHP1
+    cHP = convexHullPoints
+    cHP1 = cHP[0:-1]
+    pCnt = len(cHP1)
+    # 点少于3个时没有做相关处理
+    if(pCnt < 3):
+        return -1
+    # 初始搜索参数
+    # t - 顶部
+    # r - 右侧
+    # l - 左侧
+    t = 2
+    r = 2
+    l = pCnt - 1
+    # 暂存最小参数
+    minArea = 0
+    minT = 0
+    minR = 0
+    minL = 0
+    minI = 0
+    minH = 0
+    minW = 0
+    for i in range(0,pCnt):
+        # 底部向量，以该向量为底，用向量叉积来寻找凸包上距离该向量最远的点t
+        # 以t为中间点，用向量的点积寻找t最右边的点r和最左边的点l（投影法）
+        vBottom = cHP[i+1] - cHP[i]
+
+        # 顶点t
+        vTop = cHP1[t] - cHP[i]
+        last = vBottom.crossProduct(vTop)
+        curr = 0.0
+        while(1):
+            vTop = cHP1[(t+1)%pCnt] - cHP[i]
+            curr = vBottom.crossProduct(vTop)
+            if(curr > last):
+                last = curr
+            else:
+                break
+            t = (t+1) % pCnt
+
+        # 右侧r
+        vRight = cHP1[r] - cHP[i]
+        last = vBottom.dotProduct(vRight)
+        curr = 0.0
+        while(1):
+            vRight = cHP1[(r+1)%pCnt] - cHP[i]
+            curr = vBottom.dotProduct(vRight)
+            if(curr > last):
+                last = curr
+            else:
+                break
+            r = (r+1) % pCnt
+
+        # 左侧l
+        if(i == 0):
+            l = t
+        vLeft = cHP1[l] - cHP[i]
+        last = vBottom.dotProduct(vLeft)
+        curr = 0.0
+        while(1):
+            vRight = cHP1[(l+1)%pCnt] - cHP[i]
+            curr = vBottom.dotProduct(vRight)
+            if(curr < last):
+                last = curr
+            else:
+                break
+            l = (l+1) % pCnt
+        # 计算矩形高和宽
+        h = vBottom.crossProduct(cHP1[t]-cHP[i]) / vBottom.dotProduct(vBottom)
+        w = vBottom.dotProduct(cHP1[r]-cHP[i]) - vBottom.dotProduct(cHP1[l]-cHP[i])
+        tmpArea = w * h
+        if(i == 0 or tmpArea < minArea):
+            minArea = tmpArea
+            minI = i
+            minT = t
+            minR = r
+            minL = l
+            minH = h
+            minW = w
+    # 由5点求出最小外接矩形参数
+    p = getRectInfo(cHP[minI],cHP[minI+1],cHP1[minT],cHP1[minL],cHP1[minR])
+    rect = Rect2(p,minW,minH,minArea)
+
+    return rect
 
 def getMER(src):
     # 根据标记获取边缘
@@ -156,16 +305,20 @@ def getMER(src):
     b = getBorderInfo(borderImg,255)
     # 获取凸包点集
     ch = getConvexHull(b)
-    # 画凸包，绿线为凸包，红点为凸包点
-    borderImg = cv.cvtColor(borderImg,cv.COLOR_GRAY2RGB)
-    for i in range(1,len(ch)):
-        cv.line(borderImg,(ch[i-1].y,ch[i-1].x),(ch[i].y,ch[i].x),(0,255,0),1)
-        cv.circle(borderImg,(ch[i].y,ch[i].x),1,(0,0,255),1)
-    cv.imshow("Convex Hull",borderImg)
-    return ch
+    # 获取最小外接矩形
+    minRect = getMinRectByRotatingCalipers(ch)
+
+    return minRect
 
 
 input = cv.imread("F://MBR.bmp",cv.IMREAD_GRAYSCALE)
 cv.imshow("input",input)
-res = getMER(input)
+minRect = getMER(input)
+# 画出最小外接矩形
+output = cv.cvtColor(input,cv.COLOR_GRAY2RGB)
+cv.line(output,(round(minRect.p[0].y),round(minRect.p[0].x)),(round(minRect.p[1].y),round(minRect.p[1].x)),(0,255,0),1)
+cv.line(output,(round(minRect.p[1].y),round(minRect.p[1].x)),(round(minRect.p[2].y),round(minRect.p[2].x)),(0,255,0),1)
+cv.line(output,(round(minRect.p[2].y),round(minRect.p[2].x)),(round(minRect.p[3].y),round(minRect.p[3].x)),(0,255,0),1)
+cv.line(output,(round(minRect.p[3].y),round(minRect.p[3].x)),(round(minRect.p[0].y),round(minRect.p[0].x)),(0,255,0),1)
+cv.imshow("Min Rect",output)
 cv.waitKey(0)

@@ -17,8 +17,9 @@
 - 直方图均衡化：[原理参考链接](https://www.cnblogs.com/tianyalu/p/5687782.html)
 
 ## Image_MER(Python):
-- #仅完成了凸包#
-- 最小外接矩形（Graham扫描法）：[原理参考链接](https://www.cnblogs.com/Booble/archive/2011/03/10/1980089.html)
+- 求目标最小外接矩形
+- 求凸包（Graham扫描法）：[原理参考链接](https://www.cnblogs.com/Booble/archive/2011/03/10/1980089.html)
+- 旋转卡壳法：[原理参考链接](https://blog.csdn.net/hanchengxi/article/details/8639476)
 
 ### ##程序没有进行单元测试，仅把公式简单的实现##
 ### ##临界条件可能报错，仅供参考##
