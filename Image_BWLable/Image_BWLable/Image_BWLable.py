@@ -9,20 +9,18 @@ import copy
 #   @return                             标记后的图像
 def twoPass(src):
     # 扩充上限以标记更多连通区域
-    dst = np.uint16(src)
-    rows = dst.shape[0]
-    cols = dst.shape[1]
-    MAX_PIXEL_VAL = 255 * 256
-    for i in range(0,rows):
-        for j in range(0,cols):
-            dst[i][j] = dst[i][j] * 256
+    dst = np.zeros(src.shape,dtype = 'uint16')
+    rows = src.shape[0]
+    cols = src.shape[1]
+    MAX_PIXEL_VAL = 255
     # two-pass
     label = np.uint16(1)
+    # union-find，下标为label，uf[label]为映射的parent label
     uf = list([np.uint16(0)])
     for i in range(0,rows):
         for j in range(0,cols):
             # 该点为目标时
-            if(dst[i][j] == MAX_PIXEL_VAL):
+            if(src[i][j] == MAX_PIXEL_VAL):
                 top = 0
                 left = 0
                 if(i-1 >= 0):
@@ -32,7 +30,7 @@ def twoPass(src):
                 # 左和上都为无效像素值，赋新label并加入union-find中
                 if(top == 0 and left == 0):
                     dst[i][j] = label
-                    uf.append(np.uint16(0))
+                    uf.append(label)
                     label += 1
                 # 左和上都为label时
                 elif(top > 0 and left > 0):
@@ -43,8 +41,8 @@ def twoPass(src):
                     else:
                         minVal = min(top,left)
                         maxVal = max(top,left)
-                        dst[i][j] = minVal
-                        uf[maxVal] = minVal
+                        dst[i][j] = np.uint16(minVal)
+                        uf[maxVal] = np.uint16(minVal)
                 # 如果左和上只有一个点有效，则该点赋有效点的label
                 elif(top > 0 or left > 0):
                     dst[i][j] = max(top,left)
@@ -52,17 +50,14 @@ def twoPass(src):
     # 更新union-find，使每一个label映射到相应的集合里
     for i in range(1,len(uf)):
         mark = uf[i]
-        # 如果某label映射为0或自己，则该label为parent label，否则循环找该label映射parent label并更新映射
-        while(uf[mark] != 0 and uf[mark] != mark):
+        # 如果某label映射自己，则该label为root label，否则循环找该label映射parent label并直到找到root label
+        while(uf[mark] != mark):
             mark = uf[mark]
         uf[i] = mark
-    
+
     # 使单个连通区域内的label一致化
     for i in range(0,rows):
         for j in range(0,cols):
-            if(dst[i][j] > 0):
-                if(uf[dst[i][j]] == 0):
-                    continue
                 dst[i][j] = uf[dst[i][j]]
 
     # 给连通区域标记颜色
