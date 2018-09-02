@@ -25,5 +25,8 @@
 - [二值连通区域标记](./Image_BWLable/Image_BWLable/)
 - Two-Pass法：[原理参考链接](https://blog.csdn.net/hemeinvyiqiluoben/article/details/39854315)
 
+## Image_DFT_IDFT(C++):
+- [二维离散傅立叶变换（原始公式，速度非常慢）](./Image_DFT_IDFT/Image_DFT_IDFT/)
+
 ### ##程序没有进行单元测试，仅把公式简单的实现##
 ### ##临界条件可能报错，仅供参考##
