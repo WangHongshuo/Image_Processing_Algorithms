@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include <iostream>
+#include <time.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -141,13 +142,17 @@ void originalIDFT(const Mat& re, const Mat& im, Mat& dst)
 
 int main()
 {
+    clock_t startTime, endTime;
     Mat input = imread("F://MBR.bmp", IMREAD_GRAYSCALE);
     Mat re, im, am, output;
+    startTime = clock();
     originalDFT(input, re, im, am);
+    endTime = clock();
     originalIDFT(re, im, output);
     imshow("input", input);
     imshow("log amplitude", am);
     imshow("IDFT img", output);
+    cout << "Cost Time: " << (endTime - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
     waitKey(0);
     return 0;
 }
