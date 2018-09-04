@@ -1,6 +1,9 @@
 # Image Algorithms
 - 借助opencv的Mat的数据结构来读取图像，实现一些常见的常见的图像处理算法。
 
+- ---> 程序没有进行单元测试，仅把公式简单的实现 <---
+- ------------> 临界条件可能报错，仅供参考 <------------
+
 ## Image_Canny (C++): 
 - [Canny边缘检测](./Image_Canny/Image_Canny/)： [原理参考链接](https://blog.csdn.net/jia20003/article/details/41173767)
 
@@ -28,5 +31,5 @@
 ## Image_DFT_IDFT(C++):
 - [二维离散傅立叶变换（原始公式，速度非常慢）](./Image_DFT_IDFT/Image_DFT_IDFT/)
 
-### ##程序没有进行单元测试，仅把公式简单的实现##
-### ##临界条件可能报错，仅供参考##
+## Image_FFT_IFFT(C++):
+- [二维离散快速傅立叶变换](./Image_FFT_IFFT/Image_FFT_IFFT/)：[原理参考链接](https://www.cnblogs.com/Lyush/articles/3219196.html)
