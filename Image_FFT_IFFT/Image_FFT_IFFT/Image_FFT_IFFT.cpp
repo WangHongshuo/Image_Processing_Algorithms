@@ -187,21 +187,113 @@ void originalFFT(const Mat& src, Mat& re, Mat& im, Mat& am)
     fftShift(am);
 }
 
-void originalIFFT()
+/** @notice                                 图像rows和cols不为偶数时，补零会影响结果
+ *  @fn                                     原始二维离散快速傅立叶逆变换
+ *  @param  re                              离散傅立叶变换后的实部
+ *  @param  im                              离散傅立叶变换后的虚部
+ *  @param  dst                             逆变换后复原的图像
+ *  @return                                 void
+ */
+void originalIFFT(const Mat& re, const Mat& im, Mat& dst)
 {
+    dst = Mat(re.size(), CV_64FC1);
+    // 补成偶数，对结果有一定影响
+    int rows = re.rows, cols = re.cols;
+    if (rows % 2 == 1)
+        rows += 1;
+    if (cols % 2 == 1)
+        cols += 1;
+    // tRe, tIm和sRe, sIm分别储存行变换和列变换后的结果
+    Mat tRe = Mat::zeros(rows, cols, CV_64FC1);
+    Mat tIm = Mat::zeros(rows, cols, CV_64FC1);
+    Mat tRoi = tRe(Rect(0, 0, re.cols, re.rows));
+    re.copyTo(tRe);
+    tRoi = tIm(Rect(0, 0, re.cols, re.rows));
+    im.copyTo(tIm);
+    Mat sRe = Mat(rows, cols, CV_64FC1);
+    Mat sIm = Mat(rows, cols, CV_64FC1);
 
+    double p = 2 * CV_PI, eIm1, eIm2;
+    int hRows = rows / 2, hCols = cols / 2;
+    ComplexNum<double> W1, W2, tmpSum, tmpEven, tmpOdd, tmpCN;
+
+    // 行IFFT
+    for (int r = 0; r < rows; ++r)
+    {
+        for (int k = 0; k < cols; ++k)
+        {
+            tmpSum = 0;
+            tmpEven = 0;
+            tmpOdd = 0;
+            eIm2 = p * k / cols;
+            W2.euler(eIm2);
+            for (int n = 0; n < cols; n += 2)
+            {
+                eIm1 = p * k * (n / 2) / hRows;
+                W1.euler(eIm1);
+                tmpCN.re = re.at<double>(r, n);
+                tmpCN.im = im.at<double>(r, n);
+                tmpEven += W1 * tmpCN;
+                tmpCN.re = re.at<double>(r, n+1);
+                tmpCN.im = im.at<double>(r, n+1);
+                tmpOdd += W1 * tmpCN;
+            }
+            tmpOdd = W2 * tmpOdd;
+            tmpSum = tmpEven + tmpOdd;
+            sRe.at<double>(r, k) = tmpSum.re / cols;
+            sIm.at<double>(r, k) = tmpSum.im / cols;
+        }
+    }
+    // 列IFFT
+    for (int l = 0; l < cols; ++l)
+    {
+        for (int k = 0; k < rows; ++k)
+        {
+            tmpSum = 0;
+            tmpEven = 0;
+            tmpOdd = 0;
+            eIm2 = p * k / rows;
+            W2.euler(eIm2);
+            for (int n = 0; n < rows; n += 2)
+            {
+                eIm1 = p * k * (n / 2) / hCols;
+                W1.euler(eIm1);
+                tmpCN.re = sRe.at<double>(n, l);
+                tmpCN.im = sIm.at<double>(n, l);
+                tmpEven += W1 * tmpCN;
+                tmpCN.re = sRe.at<double>(n + 1, l);
+                tmpCN.im = sIm.at<double>(n + 1, l);
+                tmpOdd += W1 * tmpCN;
+            }
+            tmpOdd = W2 * tmpOdd;
+            tmpSum = tmpEven + tmpOdd;
+            tRe.at<double>(k, l) = tmpSum.re / rows;
+            tIm.at<double>(k, l) = tmpSum.im / rows;
+        }
+    }
+    // 取模
+    for (int i = 0; i < re.rows; i++)
+    {
+        for (int j = 0; j < re.cols; j++)
+        {
+            dst.at<double>(i, j) = sqrt(pow(tRe.at<double>(i,j),2) + pow(tIm.at<double>(i,j),2));
+        }
+    }
+    dst.convertTo(dst, CV_8UC1);
 }
 
 int main()
 {
     clock_t startTime, endTime;
     Mat input = imread("F://MBR.bmp", IMREAD_GRAYSCALE);
-    Mat re, im, am;
+    Mat re, im, am, output;
     startTime = clock();
     originalFFT(input, re, im, am);
+    originalIFFT(re, im, output);
     endTime = clock();
     imshow("input image", input);
     imshow("amplitude image", am);
+    imshow("IFFT image", output);
     cout << "Cost Time: " << (endTime - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
     waitKey(0);
     return 0;
