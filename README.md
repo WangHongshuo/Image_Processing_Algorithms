@@ -33,3 +33,6 @@
 
 ## Image_FFT_IFFT(C++):
 - [二维离散快速傅立叶变换](./Image_FFT_IFFT/Image_FFT_IFFT/)：[原理参考链接](https://www.cnblogs.com/Lyush/articles/3219196.html)
+
+## Image_Hough(C++):
+- [霍夫变换](./Image_Hough/Image_Hough/)：[原理参考链接](https://www.cnblogs.com/yunlambert/p/7487582.html)
