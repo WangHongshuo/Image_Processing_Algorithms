@@ -18,7 +18,7 @@ using namespace cv;
 void houghTransformation(const Mat& src, Mat& hf, int MARK)
 {
     // 霍夫累加器矩阵高度
-    int aRows = ceil((src.cols + src.rows) * std::sqrt(2));
+    int aRows = (int)std::ceil((src.cols + src.rows) * std::sqrt(2));
     hf = Mat::zeros(aRows, 181, CV_32SC1);
     // 预计算cos(theta)和sin(theta)值
     vector<double> cosVal(181);
@@ -32,7 +32,7 @@ void houghTransformation(const Mat& src, Mat& hf, int MARK)
         sinVal[i] = sin(x);
         ++angle;
     }
-    cosVal[0] = cosVal[180] = 0;
+    cosVal[0] = cosVal[180] = sinVal[90] = 0;
     // 霍夫变换
     int rho;
     for (int i = 0; i < src.rows; i++)
@@ -43,7 +43,7 @@ void houghTransformation(const Mat& src, Mat& hf, int MARK)
             {
                 for (int theta = -90; theta <= 90; theta++)
                 {
-                    rho = std::round(i*cosVal[theta + 90] + j * sinVal[theta + 90]) + (aRows) / 2;
+                    rho = (int)std::round(i*cosVal[theta + 90] + j * sinVal[theta + 90]) + (aRows) / 2;
                     hf.at<int>(rho, theta + 90) += 1;
                 }
             }
@@ -99,7 +99,7 @@ void drawLines(const Mat& src, Mat& dst, const Mat& hf, const int minLen, Scalar
     {
         rho = (p.second)[0];
         theta = (p.second)[1];
-        if (sinVal[theta] == 0)
+        if (theta == 90)
         {
             x0 = x1 = abs(rho);
             y0 = 0;
@@ -110,9 +110,9 @@ void drawLines(const Mat& src, Mat& dst, const Mat& hf, const int minLen, Scalar
             k = -(cosVal[theta] / sinVal[theta]);
             b = double(rho) / sinVal[theta];
             x0 = 0;
-            y0 = floor(k * x0 + b);
+            y0 = (int)std::floor(k * x0 + b);
             x1 = dst.rows;
-            y1 = floor(k * x1 + b);
+            y1 = (int)std::floor(k * x1 + b);
         }
         line(dst, Point(y0, x0), Point(y1, x1), color);
     }
@@ -124,7 +124,7 @@ int main()
     threshold(input, input, 127, 255, THRESH_BINARY);
     Mat hf, output;
     houghTransformation(input, hf, 255);
-    drawLines(input, output, hf, 50, Scalar(0, 255, 0));
+    drawLines(input, output, hf, 60, Scalar(0, 255, 0));
     imshow("input image", input);
     imshow("hough image", hf);
     imshow("lines", output);
