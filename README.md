@@ -39,3 +39,7 @@
 
 ## Image_Radon(C++):
 - [Radon变换](./Image_Radon/Image_Radon/)：[原理参考链接](https://blog.csdn.net/xiaoshen0121/article/details/79437957)
+
+## Image_White_Balance(C++):
+- [图像白平衡](./Image_White_Balance/Image_White_Balance/)
+- 灰度世界算法：[原理参考连接](https://www.cnblogs.com/jukan/p/7161007.html)
