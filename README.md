@@ -42,4 +42,5 @@
 
 ## Image_White_Balance(C++):
 - [图像白平衡](./Image_White_Balance/Image_White_Balance/)
-- 灰度世界算法：[原理参考连接](https://www.cnblogs.com/jukan/p/7161007.html)
+- 灰度世界算法：[原理参考连接](http://www.cnblogs.com/Imageshop/archive/2013/04/20/3032062.html)
+- 完美反射镜法：[原理参考链接](http://www.cnblogs.com/Imageshop/archive/2013/04/20/3032062.html)
