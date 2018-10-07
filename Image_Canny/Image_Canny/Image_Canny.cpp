@@ -23,27 +23,34 @@ float gaussFunc(int x, int y, float sigma)
 	return p2 * exp(p1);
 }
 
+/** @fn                                     卷积，需传入数据类型convFunc<int>(src,k,dst)
+ *  @param  <T>                             处理的数据类型
+ *  @param  src                             输入矩阵
+ *  @param  k                               卷积核
+ *  @param  dst                             输出矩阵
+ *  @return                                 void
+ */
 template<typename T>
-void convFunc(const Mat& src, const Mat& k, Mat& dst, T &dateTpye)
+void convFunc(const Mat& src, const Mat& k, Mat& dst)
 {
 	float tmp;
 	int c = k.rows / 2;
-	T res;
+    T res;
 	for (int i = 0; i < src.rows; i++)
 	{
 		for (int j = 0; j < src.cols; j++)
 		{
 			tmp = 0;
 			int xR, yR;
+            // 边缘采用镜像复制
 			for (int x = 0; x < k.rows; x++)
 			{
 				xR = std::abs(i + (x - c));
+                if (xR >= src.rows)
+                    xR = 2 * src.rows - xR - 1;
 				for (int y = 0; y < k.cols; y++)
 				{
-					// 边缘采用镜像复制
 					yR = std::abs(j + (y - c));
-					if (xR >= src.rows)
-						xR = 2 * src.rows - xR - 1;
 					if (yR >= src.cols)
 						yR = 2 * src.cols - yR - 1;
 					tmp += src.at<T>(xR, yR)*k.at<float>(x, y);
@@ -54,7 +61,12 @@ void convFunc(const Mat& src, const Mat& k, Mat& dst, T &dateTpye)
 		}
 	}
 }
-
+/** @fn                                     高斯滤波
+ *  @param  src                             输入图像
+ *  @param  filterSize                      滤波器大小
+ *  @param  sigma                           高斯函数sigma
+ *  @return                                 滤波后的图像
+ */
 Mat gaussFilter(const Mat& src, size_t filterSize, float sigma)
 {
 	Mat dst(src.size(), src.type());
@@ -80,8 +92,7 @@ Mat gaussFilter(const Mat& src, size_t filterSize, float sigma)
 			k.at<float>(i, j) = k.at<float>(i, filterSize - 1 - j);
 	Scalar sum = cv::sum(k);
 	k /= (float)sum[0];
-	uchar tpye = 1;
-	convFunc(src, k, dst, tpye);
+	convFunc<uchar>(src, k, dst);
 	return dst;
 }
 
@@ -116,7 +127,12 @@ void getCheckDirction(const Mat& src, int& dX, int& dY, int x, int y)
 		dX = 0; dY = -1;
 	}
 }
-
+/** @fn                                     canny
+ *  @param  src                             输入图像
+ *  @param  th1                             双阈值边缘连接下限
+ *  @param  th2                             双阈值边缘连接上限
+ *  @return                                 边缘图像
+ */
 Mat cannyFunc(const Mat& src, float th1, float th2)
 {
 	Mat dst = src.clone();
@@ -126,10 +142,9 @@ Mat cannyFunc(const Mat& src, float th1, float th2)
 	Mat fy(src.size(), CV_32FC1); // float
 	Mat kx = (Mat_<float>(3, 3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
 	Mat ky = (Mat_<float>(3, 3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
-	float type = 1;
 	// Gx, Gy
-	convFunc(dst, kx, fx, type);
-	convFunc(dst, ky, fy, type);
+	convFunc<float>(dst, kx, fx);
+	convFunc<float>(dst, ky, fy);
 	cv::magnitude(fx, fy, dst);
 	Mat dstTmp = dst.clone();
 	// theta
@@ -147,21 +162,22 @@ Mat cannyFunc(const Mat& src, float th1, float th2)
 			getCheckDirction(theta, dX, dY, i, j);
 			cX1 = i + dX; cY1 = j + dY;
 			cX2 = i - dX; cY2 = j - dY;
-			if (cX1 >= 0 && cX1 < dst.rows && cY1 >= 0 && cY1 < dst.rows)
+            // 可优先处理边缘，减少if-else
+			if (cX1 >= 0 && cX1 < dst.rows && cY1 >= 0 && cY1 < dst.cols)
 				tmp1 = dstTmp.at<float>(cX1, cY1);
 			else
-				tmp1 = -1;
-			if (cX1 >= 0 && cX1 < dst.rows && cY1 >= 0 && cY1 < dst.rows)
+				tmp1 = -1.0;
+			if (cX2 >= 0 && cX2 < dst.rows && cY2 >= 0 && cY2 < dst.cols)
 				tmp2 = dstTmp.at<float>(cX2, cY2);
 			else
-				tmp2 = -1;
+				tmp2 = -1.0;
 			if (tmp1 > dst.at<float>(i, j) || tmp2 > dst.at<float>(i,j))
 				dst.at<float>(i, j) = 0;
 		}
 	}
 	//  双阈值边缘连接
 	bool flag1, flag2;
-	for (int i = 1; i < dst.rows; i++)
+	for (int i = 0; i < dst.rows; i++)
 	{
 		for (int j = 0; j < dst.cols; j++)
 		{
@@ -179,14 +195,15 @@ Mat cannyFunc(const Mat& src, float th1, float th2)
 			{
 				for (int y = -1; y <= 1; y++)
 				{
-					if (x == y == 0)
+					if (x == 0 && y == 0)
 						continue;
+                    // 可优先处理边缘，减少if
 					int cX = std::abs(i + x);
 					int cY = std::abs(j + y);
-					if (cX > dst.rows)
-						cX = 2 * dst.rows - cX;
-					if (cY > dst.cols)
-						cY = 2 * dst.cols - cY;
+					if (cX >= dst.rows)
+						cX = 2 * dst.rows - 1 - cX;
+					if (cY >= dst.cols)
+						cY = 2 * dst.cols - 1 - cY;
 					if (dstTmp.at<float>(cX, cY) < th1)
 						flag1 = false;
 					if (dstTmp.at<float>(cX, cY) > th2)
@@ -197,6 +214,7 @@ Mat cannyFunc(const Mat& src, float th1, float th2)
 				dst.at<float>(i, j) = 0;
 		}
 	}
+
 	for (int i = 0; i < dst.rows; i++)
 	{
 		for (int j = 0; j < dst.cols; j++)
@@ -213,19 +231,7 @@ int main()
 {
 	Mat input = imread("F://lena.jpg");
 	cvtColor(input, input, CV_RGB2GRAY);
-	/*      @fn                             高斯滤波
-	 *      @param  src                     输入图像
-	 *      @param  filterSize              滤波器大小
-	 *      @param  sigma                   高斯函数sigma
-	 *      @return                         滤波后的图像
-	 */
 	Mat gaussRes = gaussFilter(input, 15, 1.5);
-	/*      @fn                             canny
-	 *      @param  src                     输入图像
-	 *      @param  th1                     双阈值边缘连接下限
-	 *      @param  th2                     双阈值边缘连接上限
-	 *      @return                         边缘图像
-	 */
 	Mat cannyRes = cannyFunc(gaussRes, 30, 60);
 	imshow("src", input);
 	imshow("gauss image", gaussRes);
