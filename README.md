@@ -24,8 +24,8 @@
 - 求凸包（Graham扫描法）：[原理参考链接](https://www.cnblogs.com/Booble/archive/2011/03/10/1980089.html)
 - 旋转卡壳法：[原理参考链接](https://blog.csdn.net/hanchengxi/article/details/8639476)
 
-## Image_BWLable(Python):
-- [二值连通区域标记](./Image_BWLable/Image_BWLable/)
+## Image_BWLabel(Python):
+- [二值连通区域标记](./Image_BWLabel/Image_BWLabel/)
 - Two-Pass法：[原理参考链接](https://blog.csdn.net/hemeinvyiqiluoben/article/details/39854315)
 
 ## Image_DFT_IDFT(C++):
