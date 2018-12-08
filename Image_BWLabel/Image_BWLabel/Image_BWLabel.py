@@ -26,6 +26,98 @@ class BwArea:
         self.bottomRight[0] = max(self.bottomRight[0],_x)
         self.bottomRight[1] = max(self.bottomRight[1],_y)
         return self
+#   @class                              标记
+#   @member parent                      标记的parent
+#   @member root                        标记的root
+class Label:
+    def __init__(self, _parent = -1, _root = -1):
+        self.parent = _parent
+        self.root = _root
+
+#   @notice                             list index（list中下标） == parent == root的label为某集合的root
+#   @class                              标记并查集
+#   @member label                       存放class Label的list()
+#   @member __size                      并查集大小
+#   @member helperCnt                   路径压缩helper函数调用计数器
+class LabelUnionFind:
+
+    def __init__(self):
+        self.label = list()
+        self.__size = 0
+        self.helperCnt = 0
+
+    #   @fn                             在list末尾添加新Label
+    #   @param  _parent                 新Label.parent
+    #   @param  _root                   新Label.root
+    #   @return                         void
+    def addLabel(self, _parent, _root):
+        if(_parent < 0 or _root < 0 or _parent > self.__size or _root > self.__size):
+            print("Error: Invalid parent or root!")
+            raise
+        self.label.append(Label(_parent, _root))
+        self.__size += 1
+
+    #   @fn                             在list末尾添加新Root Label
+    #   @return                         void
+    def addRootLabel(self):
+        self.label.append(Label(self.__size, self.__size))
+        self.__size += 1
+
+    #   @fn                             路径压缩，即更新每个Label.root
+    #   @return                         void
+    def pathCompression(self):
+        for i in range(self.__size - 1, -1, -1):
+            self.label[i].root = self.__pathCompressionHelper1(self.label[i].root)
+
+    #   @notice                         两种helper好像调用次数一样，helper1栈占用小一些
+    #   @fn                             路径压缩helper1，方法为沿着Label.root递归
+    #   @param  _root                   当前的Label.root
+    #   @return                         集合的root
+    def __pathCompressionHelper1(self, _root):
+        self.helperCnt += 1
+        # 若index的root等于index，则该index代表的Label为root label
+        if(self.label[_root].root == _root):
+            return _root
+        # 否则沿着Label.root向上进行递归
+        self.label[_root].root = self.__pathCompressionHelper1(self.label[_root].root)
+        return self.label[_root].root
+
+    #   @fn                             路径压缩helper2，方法为沿着Label.parent递归
+    #   @param  _root                   当前的Label.root
+    #   @param  _parent                 当前的Label.parent
+    #   @renturn                        集合的root
+    def __pathCompressionHelper2(self, _root, _parent):
+        self.helperCnt += 1
+        # 若index的root等于index，则该index代表的Label为root label
+        if(self.label[_root].root == _root):
+            return _root
+        # 否则沿着Label.parent向上进行递归
+        self.label[_parent].root = self.__pathCompressionHelper2(self.label[_parent].root, self.label[_parent].parent)
+        return self.label[_parent].root
+
+    #   @fn                             合并两个Label，并更新Label1到Label1.root路径下所有的label.root
+    #   @param  _label1                 Label1
+    #   @param  _label2                 Label2
+    #   @return                         void
+    def uinonLabel(self, _label1, _label2):
+        if(_label1 < 0 or _label2 < 0 or _label1 > self.__size or _label2 > self.__size):
+            print("Error: Invalid label or new parent!")
+            raise
+        # root相更新Label1.parent
+        if(self.label[_label1].root == self.label[_label2].root):
+            self.label[_label1].parent = _label2
+        # root不相等循环更改Label1到Label1.root路径下所有Label.root
+        else:
+            newRoot = self.label[_label2].root
+            tmpLabel = _label1
+            while(self.label[tmpLabel].parent != tmpLabel):
+                self.label[tmpLabel].root = newRoot
+                tmpLabel = self.label[tmpLabel].parent
+            # 更新Label1.root.root，Label1.root.parent
+            self.label[tmpLabel].parent = newRoot
+            self.label[tmpLabel].root = newRoot
+            # 最后更新Label1.parent
+            self.label[_label1].parent = _label2
 
 
 #   @fn                                 two-pass法标记联通区域
@@ -117,7 +209,7 @@ def twoPass(src):
                    cv.FONT_HERSHEY_SIMPLEX,1,(255,255,255),1)
     cv.imshow("labeledImg",labeledImg)
     return areas
-    
+
 input = cv.imread("F://MBR.bmp",cv.IMREAD_GRAYSCALE)
 input = cv.threshold(input,20,255,cv.THRESH_BINARY)
 input = input[1]
