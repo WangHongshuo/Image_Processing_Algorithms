@@ -45,6 +45,19 @@ class LabelUnionFind:
         self.label = list()
         self.__size = 0
         self.helperCnt = 0
+        self.__rootCnt = 0
+        self.normLabelRoot = list()
+        self.__uniqueRoot = list()
+        self.__isPathCompressed = False
+        self.__isCountUniqueRoot = False
+
+    def size(self):
+        return self.__size
+
+    def rootCnt(self):
+        if(not self.__isCountUniqueRoot):
+            self.countUniqueRoot()
+        return self.__rootCnt
 
     #   @fn                             在list末尾添加新Label
     #   @param  _parent                 新Label.parent
@@ -56,18 +69,22 @@ class LabelUnionFind:
             raise
         self.label.append(Label(_parent, _root))
         self.__size += 1
+        self.__isPathCompressed = False
 
     #   @fn                             在list末尾添加新Root Label
     #   @return                         void
     def addRootLabel(self):
         self.label.append(Label(self.__size, self.__size))
         self.__size += 1
+        self.__isCountUniqueRoot = False
 
     #   @fn                             路径压缩，即更新每个Label.root
     #   @return                         void
     def pathCompression(self):
         for i in range(self.__size - 1, -1, -1):
             self.label[i].root = self.__pathCompressionHelper1(self.label[i].root)
+        self.__isPathCompressed = True
+        self.__isCountUniqueRoot = False
 
     #   @notice                         两种helper好像调用次数一样，helper1栈占用小一些
     #   @fn                             路径压缩helper1，方法为沿着Label.root递归
@@ -95,6 +112,32 @@ class LabelUnionFind:
         self.label[_parent].root = self.__pathCompressionHelper2(self.label[_parent].root, self.label[_parent].parent)
         return self.label[_parent].root
 
+    #   @fn                             统计root
+    #   @return                         void
+    def countUniqueRoot(self):
+        # 统计不同root
+        self.__uniqueRoot.clear()
+        for i in range(0, self.__size):
+            if(i == self.label[i].root):
+                self.__uniqueRoot.append(i)
+        self.__rootCnt = len(self.__uniqueRoot)
+        self.__isCountUniqueRoot = True
+
+    #   @fn                             归一化Label.root，从0开始映射，存放到LabelUnionFind.normLabelRoot中
+    #   @return                         void
+    def normlizeLabelRoot(self):
+        if(not self.__isPathCompressed):
+            self.pathCompression()
+        self.normLabelRoot = [0] * self.__size
+        self.countUniqueRoot()
+        # 创建一个dict，将Label.root归一化从0开始
+        mappedLabel = dict()
+        for i in range(0, self.__rootCnt):
+            mappedLabel[self.__uniqueRoot[i]] = i 
+        # 映射
+        for i in range(0, self.__size):
+            self.normLabelRoot[i] = mappedLabel[self.label[i].root]
+
     #   @fn                             合并两个Label，并更新Label1到Label1.root路径下所有的label.root
     #   @param  _label1                 Label1
     #   @param  _label2                 Label2
@@ -118,6 +161,8 @@ class LabelUnionFind:
             self.label[tmpLabel].root = newRoot
             # 最后更新Label1.parent
             self.label[_label1].parent = _label2
+            self.__isPathCompressed = False
+            self.__isCountUniqueRoot = False
 
 
 #   @fn                                 two-pass法标记联通区域
@@ -132,7 +177,9 @@ def twoPass(src):
     # two-pass
     label = np.uint16(1)
     # union-find，下标为label，uf[label]为映射的parent label
-    uf = list([np.uint16(0)])
+    #uf = list([np.uint16(0)])
+    luf = LabelUnionFind()
+    luf.addRootLabel()
     for i in range(0,rows):
         for j in range(0,cols):
             # 该点为目标时
@@ -146,7 +193,8 @@ def twoPass(src):
                 # 左和上都为无效像素值，赋新label并加入union-find中
                 if(top == 0 and left == 0):
                     dst[i][j] = label
-                    uf.append(label)
+                    #uf.append(label)
+                    luf.addRootLabel()
                     label += 1
                 # 左和上都为label时
                 elif(top > 0 and left > 0):
@@ -158,41 +206,45 @@ def twoPass(src):
                         minVal = min(top,left)
                         maxVal = max(top,left)
                         dst[i][j] = np.uint16(minVal)
-                        uf[maxVal] = np.uint16(minVal)
+                        #uf[maxVal] = np.uint16(minVal)
+                        luf.uinonLabel(maxVal, minVal)
                 # 如果左和上只有一个点有效，则该点赋有效点的label
                 elif(top > 0 or left > 0):
                     dst[i][j] = max(top,left)
 
-    # 更新union-find，使每一个label映射到相应的集合里，同时维护一个uniqueLabel
-    uniqueLabel = list()
-    for i in range(1,len(uf)):
-        if(uf[i] == i):
-            uniqueLabel.append(uf[i])
-            continue
-        mark = uf[i]
-        # 如果某label映射自己，则该label为root label，否则循环找该label映射parent label并直到找到root label
-        while(uf[mark] != mark):
-            mark = uf[mark]
-        uf[i] = mark
+    ## 更新union-find，使每一个label映射到相应的集合里，同时维护一个uniqueLabel
+    #uniqueLabel = list()
+    #for i in range(1,len(uf)):
+    #    if(uf[i] == i):
+    #        uniqueLabel.append(uf[i])
+    #        continue
+    #    mark = uf[i]
+    #    # 如果某label映射自己，则该label为root label，否则循环找该label映射parent label并直到找到root label
+    #    while(uf[mark] != mark):
+    #        mark = uf[mark]
+    #    uf[i] = mark
 
-    # 创建一个dict，将uniqueLabel映射到以1为起始
-    mappedLabel = dict()
-    for i in range(0,len(uniqueLabel)):
-        mappedLabel[uniqueLabel[i]] = i+1
-    # 映射
-    for i in range(1,len(uf)):
-        uf[i] = mappedLabel[uf[i]]
+    luf.pathCompression()
+    luf.normlizeLabelRoot()
+
+    ## 创建一个dict，将uniqueLabel映射到以1为起始
+    #mappedLabel = dict()
+    #for i in range(0,len(uniqueLabel)):
+    #    mappedLabel[uniqueLabel[i]] = i+1
+    ## 映射
+    #for i in range(1,len(uf)):
+    #    uf[i] = mappedLabel[uf[i]]
 
     # 建立area list
     areas = list()
-    for i in range(0,len(mappedLabel)+1):
+    for i in range(0, luf.rootCnt()):
         areas.append(BwArea(i))
 
     # 使单个连通区域内的label一致化，同时更新areas list信息
     for i in range(0,rows):
         for j in range(0,cols):
             if(dst[i][j] > 0):
-                dst[i][j] = uf[dst[i][j]]
+                dst[i][j] = luf.normLabelRoot[dst[i][j]]
                 areas[dst[i][j]].size += 1
                 areas[dst[i][j]] = areas[dst[i][j]].updatePos(i,j)
 
@@ -210,7 +262,7 @@ def twoPass(src):
     cv.imshow("labeledImg",labeledImg)
     return areas
 
-input = cv.imread("F://MBR.bmp",cv.IMREAD_GRAYSCALE)
+input = cv.imread("F://Test_Img//BWLabel.bmp",cv.IMREAD_GRAYSCALE)
 input = cv.threshold(input,20,255,cv.THRESH_BINARY)
 input = input[1]
 areas = twoPass(input)
