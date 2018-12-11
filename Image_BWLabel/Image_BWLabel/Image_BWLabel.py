@@ -51,13 +51,22 @@ class LabelUnionFind:
         self.__isPathCompressed = False
         self.__isCountUniqueRoot = False
 
+    #   @fn                             返回LabelUnionFind.label的大小
+    #   @return                         LabelUnionFind.label的大小
     def size(self):
         return self.__size
 
+    #   @fn                             返回Root Label的数量
+    #   @return                         Root Label的数量
     def rootCnt(self):
         if(not self.__isCountUniqueRoot):
             self.countUniqueRoot()
         return self.__rootCnt
+
+    #   @fn                             返回LabelUnionFind中最后面的Label
+    #   return                          LabelUnionFind中最后面的Label
+    def backLabel(self):
+        return self.__size - 1
 
     #   @fn                             在list末尾添加新Label
     #   @param  _parent                 新Label.parent
@@ -176,9 +185,12 @@ def twoPass(src):
     MAX_PIXEL_VAL = 255
     # two-pass
     label = np.uint16(1)
-    # union-find，下标为label，uf[label]为映射的parent label
-    #uf = list([np.uint16(0)])
+
+    # LabelUnionFind.label的下标为Label
+    # LabelUnionFind.label[i].parent为该Label的parent Label
+    # LabelUnionFind.label[i].root为该Label的root Label
     luf = LabelUnionFind()
+    # Label从1开始，跳过0
     luf.addRootLabel()
     for i in range(0,rows):
         for j in range(0,cols):
@@ -190,57 +202,34 @@ def twoPass(src):
                     top = dst[i-1][j]
                 if(j-1 >= 0):
                     left = dst[i][j-1]
-                # 左和上都为无效像素值，赋新label并加入union-find中
+                # 左和上都为无效像素值，赋新Label并加入LabelUnionFind中
                 if(top == 0 and left == 0):
-                    dst[i][j] = label
-                    #uf.append(label)
                     luf.addRootLabel()
-                    label += 1
-                # 左和上都为label时
+                    dst[i][j] = luf.backLabel()
+                # 左和上都为Label时
                 elif(top > 0 and left > 0):
-                    # 如果label相等，则该点赋左或上的值
+                    # 如果Label相等，则该点赋左或上的值
                     if(top == left):
                         dst[i][j] = top
-                    # 如果label不相等，则该点赋两点最小的label，并更新union-find
+                    # 如果Label不相等，则该点赋两点最小的label，并合并Label
                     else:
                         minVal = min(top,left)
                         maxVal = max(top,left)
                         dst[i][j] = np.uint16(minVal)
-                        #uf[maxVal] = np.uint16(minVal)
                         luf.uinonLabel(maxVal, minVal)
-                # 如果左和上只有一个点有效，则该点赋有效点的label
+                # 如果左和上只有一个点有效，则该点赋有效点的Label
                 elif(top > 0 or left > 0):
                     dst[i][j] = max(top,left)
 
-    ## 更新union-find，使每一个label映射到相应的集合里，同时维护一个uniqueLabel
-    #uniqueLabel = list()
-    #for i in range(1,len(uf)):
-    #    if(uf[i] == i):
-    #        uniqueLabel.append(uf[i])
-    #        continue
-    #    mark = uf[i]
-    #    # 如果某label映射自己，则该label为root label，否则循环找该label映射parent label并直到找到root label
-    #    while(uf[mark] != mark):
-    #        mark = uf[mark]
-    #    uf[i] = mark
-
     luf.pathCompression()
     luf.normlizeLabelRoot()
-
-    ## 创建一个dict，将uniqueLabel映射到以1为起始
-    #mappedLabel = dict()
-    #for i in range(0,len(uniqueLabel)):
-    #    mappedLabel[uniqueLabel[i]] = i+1
-    ## 映射
-    #for i in range(1,len(uf)):
-    #    uf[i] = mappedLabel[uf[i]]
 
     # 建立area list
     areas = list()
     for i in range(0, luf.rootCnt()):
         areas.append(BwArea(i))
 
-    # 使单个连通区域内的label一致化，同时更新areas list信息
+    # 使单个连通区域内的Label一致化，同时更新areas list信息
     for i in range(0,rows):
         for j in range(0,cols):
             if(dst[i][j] > 0):
