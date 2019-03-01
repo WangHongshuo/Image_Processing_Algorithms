@@ -37,10 +37,10 @@ class Point2:
         return self.x * p.x + self.y * p.y
 
 class Rect2:
-    def __init__(self,_p,_w,_h,_area):
+    def __init__(self,_p,_minBorder,_maxBorder,_area):
         self.p = _p
-        self.w = _w
-        self.h = _h
+        self.minBorder = _minBorder
+        self.maxBorder = _maxBorder
         self.area = _area
 
 #   @class                              边缘信息
@@ -280,7 +280,7 @@ def getMinRectByRotatingCalipers(convexHullPoints):
             else:
                 break
             l = (l+1) % pCnt
-        # 计算矩形高和宽
+        # 计算高和宽（不是最小外接矩形的高和宽，w*h数值上等于最小外接矩形面积）
         h = vBottom.crossProduct(cHP1[t]-cHP[i]) / vBottom.dotProduct(vBottom)
         w = vBottom.dotProduct(cHP1[r]-cHP[i]) - vBottom.dotProduct(cHP1[l]-cHP[i])
         tmpArea = w * h
@@ -294,7 +294,12 @@ def getMinRectByRotatingCalipers(convexHullPoints):
             minW = w
     # 由5点求出最小外接矩形参数
     p = getRectInfo(cHP[minI],cHP[minI+1],cHP1[minT],cHP1[minL],cHP1[minR])
-    rect = Rect2(p,minW,minH,minArea)
+    tmpW = math.sqrt(math.pow(p[0].x - p[1].x, 2) + math.pow(p[0].y - p[1].y, 2))
+    tmpH = math.sqrt(math.pow(p[0].x - p[3].x, 2) + math.pow(p[0].y - p[3].y, 2))
+    # 求最小外接矩形的短边与长边
+    maxBorder = max(tmpW, tmpH)
+    minBorder = min(tmpW, tmpH)
+    rect = Rect2(p,minBorder,maxBorder,minArea)
 
     return rect
 
@@ -311,7 +316,7 @@ def getMER(src):
     return minRect
 
 
-input = cv.imread("F://MBR.bmp",cv.IMREAD_GRAYSCALE)
+input = cv.imread("F://Test_Img//MBR.bmp",cv.IMREAD_GRAYSCALE)
 cv.imshow("input",input)
 minRect = getMER(input)
 # 画出最小外接矩形
