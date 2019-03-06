@@ -98,7 +98,7 @@ class LabelUnionFind:
     #   @param  _srcLabel1              源Label
     #   @param  _dstLabel2              目标Label
     #   @return                         void
-    def uinonLabel(self, _srcLabel, _dstLabel):
+    def unionLabel(self, _srcLabel, _dstLabel):
         if(_srcLabel < 0 or _dstLabel < 0 or _srcLabel > self.__size or _dstLabel > self.__size):
             print("Invalid label.")
             raise
@@ -166,7 +166,7 @@ def twoPass(src, neighbor = 4):
                             minVal = min(top,left)
                             maxVal = max(top,left)
                             dst[i][j] = np.uint16(minVal)
-                            luf.uinonLabel(maxVal, minVal)
+                            luf.unionLabel(maxVal, minVal)
                     # 如果左和上只有一个点有效，则该点赋有效点的Label
                     elif(top > 0 or left > 0):
                         dst[i][j] = max(top,left)
@@ -176,32 +176,55 @@ def twoPass(src, neighbor = 4):
             for j in range(0, cols):
                 # 当该点为目标时
                 if(src[i][j] == MAX_PIXEL_VAL):
-                    # 依次读取left, topLeft, top, topRight到set中，去零去重
-                    tmpSet.clear()
-                    if(j-1 >= 0):
-                        tmpSet.add(dst[i][j-1])         # top
+                    # 当为首个目标或目标左侧不是标记后的点时，检查左、左上、上和右上4个点
+                    if(j == 0 or dst[i][j-1] == 0):
+                        # 依次读取left, topLeft, top, topRight到set中，去零去重
+                        tmpSet.clear()
+                        if(j-1 >= 0):
+                            tmpSet.add(dst[i][j-1])         # top
+                            if(i-1 >= 0):
+                                tmpSet.add(dst[i-1][j-1])   # topLeft
                         if(i-1 >= 0):
-                            tmpSet.add(dst[i-1][j-1])   # topLeft
-                    if(i-1 >= 0):
-                        tmpSet.add(dst[i-1][j])         # top
-                        if(j+1 < cols):
-                            tmpSet.add(dst[i-1][j+1])   # topRight
-                    tmpSet.discard(0)
+                            tmpSet.add(dst[i-1][j])         # top
+                            if(j+1 < cols):
+                                tmpSet.add(dst[i-1][j+1])   # topRight
+                        tmpSet.discard(0)
 
-                    # tmpSet大小为0，则周围四点全为0，开新Label
-                    if(len(tmpSet) == 0):
-                        luf.addRootLabel()
-                        dst[i][j] = luf.backLabel()
-                    # tmpSet大小为1，则该点赋值为存在的这一点
-                    elif(len(tmpSet) == 1):
-                        dst[i][j] = next(iter(tmpSet))
-                    # tmpSet大于1，则从小到大排序，该点赋值最小的Label，并把其他Label与最小Label合并
+                        # tmpSet大小为0，则周围四点全为0，开新Label
+                        if(len(tmpSet) == 0):
+                            luf.addRootLabel()
+                            dst[i][j] = luf.backLabel()
+                        # tmpSet大小为1，则该点赋值为存在的这一点
+                        elif(len(tmpSet) == 1):
+                            dst[i][j] = next(iter(tmpSet))
+                        # tmpSet大于1，则从小到大排序，该点赋值最小的Label，并把其他Label与最小Label合并
+                        else:
+                            tmpList = list(tmpSet)
+                            tmpList.sort()
+                            dst[i][j] = tmpList[0]
+                            for k in range(1, len(tmpList)):
+                                luf.unionLabel(tmpList[k], tmpList[0])
+                    # 只需检查left与topRight两个点即可，left已经比topLeft和top小了
                     else:
-                        tmpList = list(tmpSet)
-                        tmpList.sort()
-                        dst[i][j] = tmpList[0]
-                        for k in range(1, len(tmpList)):
-                            luf.uinonLabel(tmpList[k], tmpList[0])
+                        # 读取left和topRight的值
+                        left = dst[i][j-1]
+                        topRight = 0
+                        if(i-1 >= 0 and j+1 < cols):
+                            topRight = dst[i-1][j+1]
+
+                        if(topRight == 0 or topRight == left):
+                            dst[i][j] = left
+                        elif(topRight > left):
+                            dst[i][j] = left
+                            luf.unionLabel(left, topRight)
+                        else:
+                            # 将其余三点与topRight合并
+                            dst[i][j] = topRight
+                            if(dst[i-1][j] != 0):
+                                luf.unionLabel(topRight, dst[i-1][j])
+                            if(dst[i-1][j-1] != 0):
+                                luf.unionLabel(topRight, dst[i-1][j-1])
+                            luf.unionLabel(topRight, left)
 
     luf.normlizeLabelRoot()
     print("two-pass get label time: ", datetime.datetime.now() - tmpTime)
