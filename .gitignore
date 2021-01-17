@@ -47,3 +47,6 @@
 *.ilk
 *.pyproj
 *.gitattributes
+
+# Build Path
+build/*

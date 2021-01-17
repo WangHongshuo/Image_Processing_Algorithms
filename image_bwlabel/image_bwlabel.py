@@ -64,8 +64,7 @@ class LabelUnionFind:
     #   @return                         void
     def addLabel(self, _parent):
         if(_parent < 0 or _parent > self.__size):
-            print("Invalid parent.")
-            raise
+            raise "Invalid parent."
         self.label.append(self.label[_parent])
         self.__size += 1
 
@@ -100,8 +99,7 @@ class LabelUnionFind:
     #   @return                         void
     def unionLabel(self, _srcLabel, _dstLabel):
         if(_srcLabel < 0 or _dstLabel < 0 or _srcLabel > self.__size or _dstLabel > self.__size):
-            print("Invalid label.")
-            raise
+            raise "Invalid label."
         # root相等则跳过
         if(self.label[_srcLabel] == self.label[_dstLabel]):
             return
@@ -123,8 +121,7 @@ def twoPass(src, neighbor = 4):
     startTime = datetime.datetime.now()
 
     if(neighbor != 4 and neighbor != 8):
-        print("Invalid neighbor parameter!")
-        raise
+        raise "Invalid neighbor parameter!"
 
     # 扩充上限以标记更多连通区域
     dst = np.zeros(src.shape,dtype = 'uint16')
@@ -263,7 +260,7 @@ def twoPass(src, neighbor = 4):
     cv.imshow("labeledImg",labeledImg)
     return areas
 
-input = cv.imread("F://Test_Img//BWLabel.bmp",cv.IMREAD_GRAYSCALE)
+input = cv.imread("H://Test_Img//BWLabel0.bmp",cv.IMREAD_GRAYSCALE)
 input = cv.threshold(input,20,255,cv.THRESH_BINARY)
 input = input[1]
 areas = twoPass(input, 8)

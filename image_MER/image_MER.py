@@ -316,7 +316,7 @@ def getMER(src):
     return minRect
 
 
-input = cv.imread("F://Test_Img//MBR.bmp",cv.IMREAD_GRAYSCALE)
+input = cv.imread("H://Test_Img//MBR.bmp",cv.IMREAD_GRAYSCALE)
 cv.imshow("input",input)
 minRect = getMER(input)
 # 画出最小外接矩形

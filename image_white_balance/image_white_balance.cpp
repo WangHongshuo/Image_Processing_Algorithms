@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <opencv2\core.hpp>
 #include <opencv2\highgui.hpp>
@@ -392,7 +391,7 @@ void automaticWhiteBalance(const Mat& src, Mat& dst, size_t blockWidth, size_t b
 
 int main()
 {
-    Mat input = imread("F://Test_Img//WB2.jpg");
+    Mat input = imread("H://Test_Img//WB3.jpg");
     Mat GW_output, PR_output, ABW_output;
     grayWorld(input, GW_output);
     perfectReflector(input, 0.1, PR_output);

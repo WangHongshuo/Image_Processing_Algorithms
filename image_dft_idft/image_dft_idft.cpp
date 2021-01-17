@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <iostream>
+﻿#include <iostream>
 #include <time.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -142,17 +141,21 @@ void originalIDFT(const Mat& re, const Mat& im, Mat& dst)
 
 int main()
 {
-    clock_t startTime, endTime;
-    Mat input = imread("F://MBR.bmp", IMREAD_GRAYSCALE);
+    clock_t startTime;
+    Mat input = imread("H://lena.jpg", IMREAD_GRAYSCALE);
+    cout << "Load image success! Use small image and release mode or it will cost a lot of time." << endl;
+    resize(input, input, Size(99, 99));
     Mat re, im, am, output;
     startTime = clock();
     originalDFT(input, re, im, am);
-    endTime = clock();
+    cout << "DFT Cost Time: " << (clock() - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
+    startTime = clock();
     originalIDFT(re, im, output);
+    cout << "IDFT Cost Time: " << (clock() - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
     imshow("input", input);
     imshow("log amplitude", am);
     imshow("IDFT img", output);
-    cout << "Cost Time: " << (endTime - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
+    cout << "End." << endl;
     waitKey(0);
     return 0;
 }

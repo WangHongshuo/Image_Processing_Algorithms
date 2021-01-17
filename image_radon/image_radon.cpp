@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <iostream>
+﻿#include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -88,7 +87,7 @@ void radonTransfromation(const Mat& src, Mat& rt, Mat& rtImg, Mat& markedImg, do
 
 int main()
 {
-    Mat input = imread("F://Test_Img//Radon.bmp", IMREAD_GRAYSCALE);
+    Mat input = imread("H://Test_Img//Radon.bmp", IMREAD_GRAYSCALE);
     Mat rt, normEHImg, markedImg;
     radonTransfromation(input, rt, normEHImg, markedImg, 1.0);
     imshow("input img", input);

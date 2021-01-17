@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <opencv2\core.hpp>
 #include <opencv2\highgui.hpp>
@@ -65,7 +64,7 @@ void drawLines(const Mat& src, Mat& dst, const Mat& hf, const int minLen, Scalar
     vector<int> v(2);
     int val, rhoBias = hf.rows / 2;
     dst = src.clone();
-    cvtColor(dst, dst, CV_GRAY2BGR);
+    cvtColor(dst, dst, COLOR_GRAY2BGR);
     // 寻找大于minLin长度的线
     for (int i = 0; i < hf.rows; i++)
     {
@@ -120,13 +119,15 @@ void drawLines(const Mat& src, Mat& dst, const Mat& hf, const int minLen, Scalar
 
 int main()
 {
-    Mat input = imread("F://Test_Img//Hough.bmp", IMREAD_GRAYSCALE);
+    Mat input = imread("H://Test_Img//Hough.bmp", IMREAD_GRAYSCALE);
     threshold(input, input, 127, 255, THRESH_BINARY);
     Mat hf, output;
     houghTransformation(input, hf, 255);
     drawLines(input, output, hf, 60, Scalar(0, 255, 0));
+    Mat hfForShow;
+    hf.convertTo(hfForShow, CV_8UC1);
     imshow("input image", input);
-    imshow("hough image", hf);
+    imshow("hough image", hfForShow);
     imshow("lines", output);
     waitKey(0);
     return 0;

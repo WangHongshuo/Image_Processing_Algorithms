@@ -1,5 +1,4 @@
-﻿#include "pch.h"
-#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <time.h>
 #include <opencv2/core.hpp>
@@ -207,9 +206,9 @@ void originalIFFT(const Mat& re, const Mat& im, Mat& dst)
     Mat tRe = Mat::zeros(rows, cols, CV_64FC1);
     Mat tIm = Mat::zeros(rows, cols, CV_64FC1);
     Mat tRoi = tRe(Rect(0, 0, re.cols, re.rows));
-    re.copyTo(tRe);
+    re.copyTo(tRoi);
     tRoi = tIm(Rect(0, 0, re.cols, re.rows));
-    im.copyTo(tIm);
+    im.copyTo(tRoi);
     Mat sRe = Mat(rows, cols, CV_64FC1);
     Mat sIm = Mat(rows, cols, CV_64FC1);
 
@@ -284,17 +283,21 @@ void originalIFFT(const Mat& re, const Mat& im, Mat& dst)
 
 int main()
 {
-    clock_t startTime, endTime;
-    Mat input = imread("F://MBR.bmp", IMREAD_GRAYSCALE);
+    clock_t startTime;
+    Mat input = imread("H://lena.jpg", IMREAD_GRAYSCALE);
+    cout << "Load image success! Use small image and release mode or it will cost a lot of time." << endl;
+    resize(input, input, Size(299, 299));
     Mat re, im, am, output;
     startTime = clock();
     originalFFT(input, re, im, am);
+    cout << "FFT Cost Time: " << (clock() - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
+    startTime = clock();
     originalIFFT(re, im, output);
-    endTime = clock();
+    cout << "IFFT Cost Time: " << (clock() - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
+    cout << "End." << endl;
     imshow("input image", input);
     imshow("amplitude image", am);
     imshow("IFFT image", output);
-    cout << "Cost Time: " << (endTime - startTime) * 1000 / CLOCKS_PER_SEC << " MS" << endl;
     waitKey(0);
     return 0;
 }

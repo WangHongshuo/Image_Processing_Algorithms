@@ -1,7 +1,6 @@
 ﻿/*		opencv坐标系(row, col)
  *		对应图象坐标系(y, x)
  */
-#include "pch.h"
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -229,8 +228,8 @@ Mat cannyFunc(const Mat& src, float th1, float th2)
 
 int main()
 {
-	Mat input = imread("F://lena.jpg");
-	cvtColor(input, input, CV_RGB2GRAY);
+	Mat input = imread("H://lena.jpg");
+	cvtColor(input, input, COLOR_RGB2GRAY);
 	Mat gaussRes = gaussFilter(input, 15, 1.5);
 	Mat cannyRes = cannyFunc(gaussRes, 30, 60);
 	imshow("src", input);

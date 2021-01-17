@@ -1,7 +1,6 @@
 ﻿/*		opencv坐标系(row, col)
  *		对应图象坐标系(y, x)
  */
-#include "pch.h"
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -184,8 +183,8 @@ Mat bicubic(const Mat& src, int rows, int cols)
 
 int main()
 {
-	Mat input = imread("F://lena.jpg");
-	cvtColor(input, input, CV_RGB2GRAY);
+	Mat input = imread("H://lena.jpg");
+	cvtColor(input, input, COLOR_RGB2GRAY);
 	double a = 1.5;
 	/*      @fn                             image resize
 	 *      @param  src                     输入图像
@@ -196,6 +195,7 @@ int main()
 	Mat resNearest = nearest(input, input.rows*a, input.cols*a);
 	Mat resLinear = linear(input, input.rows*a, input.cols*a);
 	Mat resBicubic = bicubic(input, input.rows*a, input.cols*a);
+	imshow("Origin", input);
 	imshow("Nearest", resNearest);
 	imshow("Linear", resLinear);
 	imshow("Bicubic", resBicubic);

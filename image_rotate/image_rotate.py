@@ -29,7 +29,7 @@ def linear(x,y,src):
         res = res + u*v*src[srcY1][srcX1]
         for i in range(0,len(res)):
             res[i] = min(res[i],255)
-        return res;
+        return res
     else:
         return (-1,)
 
@@ -97,7 +97,7 @@ def rotateFunc(image,center,angle,isExpand,method):
                     dst[y][x] = image[srcY][srcX]
     return dst
 
-input = cv.imread("F://lena.jpg")
+input = cv.imread("H://lena.jpg")
 #   @fn                     图像旋转
 #   @param  image           输入图像
 #   @param  center          旋转中心(row, col)

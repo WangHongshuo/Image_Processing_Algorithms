@@ -93,7 +93,7 @@ def histogramEqualization(src):
     drawHist(dstHist,512,2,"processed hist")
     return dst
 
-input = cv.imread("F://lena.jpg")
+input = cv.imread("H://lena.jpg")
 #input = cv.cvtColor(input,cv.COLOR_RGB2GRAY)
 res = histogramEqualization(input)
 cv.imshow("input",input)
